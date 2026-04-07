@@ -1,5 +1,3 @@
-![Python](https://img.shields.io/badge/python-3.13-blue?logo=python&logoColor=white)
-![Cryptography](https://img.shields.io/badge/Crypto-Library-green?logo=fortinet&logoColor=white)
 # Crypto Application
 
 A cross-platform GUI app for text encryption, decryption, and hashing built with Flet.
@@ -36,36 +34,61 @@ pip3 install -r requirements.txt
 python3 main_flet.py
 ```
 
-### Build APK
+### Build macOS App
+
+**Prerequisites:**
 
 ```bash
-# Install Flet CLI
-pip3 install flet
+# 1. Install Xcode from App Store, then:
+sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
+sudo xcodebuild -runFirstLaunch
 
-# Build for Android
-flet build apk
-
-# The APK will be in build/ directory
+# 2. Install CocoaPods
+brew install cocoapods
 ```
+
+**Build:**
+
+```bash
+./build_macos.sh
+```
+
+The app will be in `build/macos/` directory.
+
+### Build APK (Android)
+
+```bash
+# Requires Java JDK
+./build_apk.sh
+```
+
+Or run manually:
+
+```bash
+export SSL_CERT_FILE=/opt/homebrew/etc/openssl@3/cert.pem
+flet build apk
+```
+
+APK output: `build/android/app/outputs/apk/release/app-release.apk`
 
 ### Programmatic Usage
 
 ```python
-from crypto_app import HashEncoder, SymmetricCipher, AsymmetricCipher
+from main_flet import CryptoEngine
 
-# Hash/Encode
-hash_val = HashEncoder.sha256("Hello, World!")
-print(hash_val)
+e = CryptoEngine()
 
-# Symmetric (AES)
-encrypted = SymmetricCipher.aes_encrypt("Secret text", "password")
-decrypted = SymmetricCipher.aes_decrypt(encrypted, "password")
+# Hash
+print(e.sha256("Hello"))
 
-# Asymmetric (RSA)
-priv_key, pub_key = AsymmetricCipher.generate_keys(2048)
-AsymmetricCipher.save_keys(priv_key, pub_key)
-encrypted = AsymmetricCipher.rsa_encrypt("Secret", "./public.pem")
-decrypted = AsymmetricCipher.rsa_decrypt(encrypted, "./private.pem")
+# Symmetric
+enc = e.aes_encrypt("Secret", "password")
+dec = e.aes_decrypt(enc, "password")
+
+# RSA
+priv, pub = e.generate_rsa_keys()
+enc = e.rsa_encrypt_text("Hi", pub)
+dec = e.rsa_decrypt_text(enc, priv)
 ```
 
 ## Running Tests
@@ -77,11 +100,13 @@ python3 test_crypto.py
 ## Project Structure
 
 ```
-Crypto/
+CryptoTool/
 ├── main_flet.py       # Flet GUI application
 ├── crypto_app.py      # CLI application
 ├── test_crypto.py     # Test suite
 ├── flet.toml          # Flet build configuration
+├── build_macos.sh     # macOS build script
+├── build_apk.sh       # Android APK build script
 ├── requirements.txt   # Dependencies
 └── README.md         # This file
 ```

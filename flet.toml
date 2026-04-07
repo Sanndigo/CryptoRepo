@@ -25,3 +25,9 @@ ios = {
 web = {
     "renderer": "canvaskit",
 }
+
+# Entry point
+entrypoint = "main_flet.py"
+
+# App ID
+app_id = "com.cryptoapp.tool"
