@@ -1,3 +1,5 @@
+![Python](https://img.shields.io/badge/python-3.13-blue?logo=python&logoColor=white)
+![Cryptography](https://img.shields.io/badge/Crypto-Library-green?logo=fortinet&logoColor=white)
 # Crypto Application
 
 A cross-platform GUI app for text encryption, decryption, and hashing built with Flet.

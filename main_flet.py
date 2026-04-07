@@ -6,9 +6,6 @@ Crypto Application - Flet GUI
 import flet as ft
 import base64
 import hashlib
-import os
-import tempfile
-from typing import Optional
 
 from Crypto.Cipher import AES, DES, PKCS1_OAEP, ARC4
 from Crypto.PublicKey import RSA as RSAKey
@@ -128,30 +125,34 @@ class CryptoEngine:
 def main(page: ft.Page):
     page.title = "Crypto Tool"
     page.theme_mode = ft.ThemeMode.DARK
-    page.padding = 20
-    page.window_width = 500
-    page.window_height = 900
+    page.padding = 15
+    page.window_width = 450
+    page.window_height = 850
 
     engine = CryptoEngine()
 
-    # --- State ---
-    page.session_set("rsa_private_key", "")
-    page.session_set("rsa_public_key", "")
-
-    # --- Components ---
-    # Tabs
-    tab_hash = ft.Tab()
-    tab_symmetric = ft.Tab()
-    tab_rsa = ft.Tab()
-
     # ===== HASH/ENCODE TAB =====
     input_hash = ft.TextField(label="Input text", multiline=True, min_lines=2, max_lines=4)
-    output_hash = ft.TextField(label="Result", readonly=True, multiline=True, min_lines=2, max_lines=4)
+    output_hash = ft.TextField(label="Result", read_only=True, multiline=True, min_lines=2, max_lines=4)
+
+    hash_dropdown = ft.Dropdown(
+        label="Algorithm",
+        options=[
+            ft.dropdown.Option("Base64 Encode"),
+            ft.dropdown.Option("Base64 Decode"),
+            ft.dropdown.Option("MD5"),
+            ft.dropdown.Option("RIPEMD-160"),
+            ft.dropdown.Option("SHA1"),
+            ft.dropdown.Option("SHA256"),
+            ft.dropdown.Option("SHA512"),
+        ],
+        value="Base64 Encode",
+    )
 
     def run_hash(e):
         text = input_hash.value
         if not text:
-            page.show_snack_bar(ft.SnackBar(content=ft.Text("Enter text first!")))
+            page.show_snack_bar(ft.SnackBar(content=ft.Text("⚠️ Enter text first!")))
             return
         algo = hash_dropdown.value
         try:
@@ -176,39 +177,26 @@ def main(page: ft.Page):
             output_hash.value = f"Error: {ex}"
         page.update()
 
-    hash_dropdown = ft.Dropdown(
-        label="Algorithm",
-        options=[
-            ft.dropdown.Option("Base64 Encode"),
-            ft.dropdown.Option("Base64 Decode"),
-            ft.dropdown.Option("MD5"),
-            ft.dropdown.Option("RIPEMD-160"),
-            ft.dropdown.Option("SHA1"),
-            ft.dropdown.Option("SHA256"),
-            ft.dropdown.Option("SHA512"),
-        ],
-        value="Base64 Encode",
-    )
+    def copy_to_clipboard(value, label=""):
+        page.set_clipboard(value)
+        page.show_snack_bar(ft.SnackBar(content=ft.Text(f"📋 Copied {label}!")))
 
-    btn_hash = ft.ElevatedButton("Process", on_click=run_hash, expand=True)
+    btn_hash = ft.ElevatedButton("▶ Process", on_click=run_hash, expand=True)
+    btn_copy_hash = ft.ElevatedButton("📋 Copy", on_click=lambda e: copy_to_clipboard(output_hash.value, "result"))
 
-    btn_copy_hash = ft.ElevatedButton(
-        "📋 Copy",
-        on_click=lambda e: (page.set_clipboard(output_hash.value), page.show_snack_bar(ft.SnackBar(content=ft.Text("Copied!")))),
-    )
-
-    tab_hash.content = ft.Column([
-        ft.Text("Hash / Encode", size=24, weight=ft.FontWeight.BOLD),
+    tab_hash_content = ft.Column([
+        ft.Text("🔐 Hash / Encode", size=22, weight=ft.FontWeight.BOLD),
+        ft.Text("No key required", size=12, color=ft.Colors.GREY_400),
         input_hash,
         hash_dropdown,
-        ft.Row([btn_hash, btn_copy_hash]),
+        ft.Row([btn_hash, btn_copy_hash], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
         output_hash,
-    ], spacing=15, scroll=ft.ScrollMode.AUTO)
+    ], spacing=12, scroll=ft.ScrollMode.AUTO)
 
     # ===== SYMMETRIC TAB =====
     input_sym = ft.TextField(label="Input text", multiline=True, min_lines=2, max_lines=4)
     password_sym = ft.TextField(label="Password", password=True, can_reveal_password=True)
-    output_sym = ft.TextField(label="Result", readonly=True, multiline=True, min_lines=2, max_lines=4)
+    output_sym = ft.TextField(label="Result", read_only=True, multiline=True, min_lines=2, max_lines=4)
 
     sym_algo = ft.Dropdown(
         label="Algorithm",
@@ -227,7 +215,7 @@ def main(page: ft.Page):
         text = input_sym.value
         password = password_sym.value
         if not text or not password:
-            page.show_snack_bar(ft.SnackBar(content=ft.Text("Enter text and password!")))
+            page.show_snack_bar(ft.SnackBar(content=ft.Text("⚠️ Enter text and password!")))
             return
         algo = sym_algo.value
         try:
@@ -247,31 +235,28 @@ def main(page: ft.Page):
                 result = "Unknown algorithm"
             output_sym.value = result
         except Exception as ex:
-            output_sym.value = f"Error: {ex}"
+            output_sym.value = f"❌ Error: {ex}"
         page.update()
 
-    btn_sym = ft.ElevatedButton("Process", on_click=run_symmetric, expand=True)
+    btn_sym = ft.ElevatedButton("▶ Process", on_click=run_symmetric, expand=True)
+    btn_copy_sym = ft.ElevatedButton("📋 Copy", on_click=lambda e: copy_to_clipboard(output_sym.value, "result"))
 
-    btn_copy_sym = ft.ElevatedButton(
-        "📋 Copy",
-        on_click=lambda e: (page.set_clipboard(output_sym.value), page.show_snack_bar(ft.SnackBar(content=ft.Text("Copied!")))),
-    )
-
-    tab_symmetric.content = ft.Column([
-        ft.Text("Symmetric Encryption", size=24, weight=ft.FontWeight.BOLD),
+    tab_symmetric_content = ft.Column([
+        ft.Text("🔑 Symmetric Encryption", size=22, weight=ft.FontWeight.BOLD),
+        ft.Text("Password required", size=12, color=ft.Colors.GREY_400),
         input_sym,
         password_sym,
         sym_algo,
-        ft.Row([btn_sym, btn_copy_sym]),
+        ft.Row([btn_sym, btn_copy_sym], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
         output_sym,
-    ], spacing=15, scroll=ft.ScrollMode.AUTO)
+    ], spacing=12, scroll=ft.ScrollMode.AUTO)
 
     # ===== RSA TAB =====
-    rsa_pub_display = ft.TextField(label="Public Key (PEM)", readonly=True, multiline=True, min_lines=3, max_lines=5, text_size=10)
-    rsa_priv_display = ft.TextField(label="Private Key (PEM)", readonly=True, multiline=True, min_lines=3, max_lines=5, text_size=10, password=True, can_reveal_password=True)
+    rsa_pub_display = ft.TextField(label="Public Key (PEM)", read_only=True, multiline=True, min_lines=3, max_lines=5, text_size=10)
+    rsa_priv_display = ft.TextField(label="Private Key (PEM)", read_only=True, multiline=True, min_lines=3, max_lines=5, text_size=10, password=True, can_reveal_password=True)
 
     rsa_input = ft.TextField(label="Input text", multiline=True, min_lines=2, max_lines=4)
-    rsa_output = ft.TextField(label="Result", readonly=True, multiline=True, min_lines=2, max_lines=4)
+    rsa_output = ft.TextField(label="Result", read_only=True, multiline=True, min_lines=2, max_lines=4)
 
     rsa_algo = ft.Dropdown(
         label="Operation",
@@ -292,43 +277,45 @@ def main(page: ft.Page):
                 page.session_set("rsa_public_key", pub)
                 rsa_pub_display.value = pub
                 rsa_priv_display.value = priv
-                rsa_output.value = "Keys generated! Save them."
-                page.show_snack_bar(ft.SnackBar(content=ft.Text("RSA Keys Generated!")))
+                rsa_output.value = "✅ Keys generated! Use them to encrypt/decrypt."
+                page.show_snack_bar(ft.SnackBar(content=ft.Text("✅ RSA Keys Generated!")))
             elif algo == "RSA Encrypt":
                 text = rsa_input.value
                 pub_key = page.session_get("rsa_public_key")
                 if not text or not pub_key:
-                    page.show_snack_bar(ft.SnackBar(content=ft.Text("Enter text and generate keys first!")))
+                    page.show_snack_bar(ft.SnackBar(content=ft.Text("⚠️ Enter text and generate keys first!")))
                     return
                 result = engine.rsa_encrypt_text(text, pub_key)
                 rsa_output.value = result
             elif algo == "RSA Decrypt":
                 text = rsa_input.value
-                priv_key = page.session_set("rsa_private_key", page.session_get("rsa_private_key"))
                 priv_key = page.session_get("rsa_private_key")
                 if not text or not priv_key:
-                    page.show_snack_bar(ft.SnackBar(content=ft.Text("Enter ciphertext and generate keys first!")))
+                    page.show_snack_bar(ft.SnackBar(content=ft.Text("⚠️ Enter ciphertext and generate keys first!")))
                     return
                 result = engine.rsa_decrypt_text(text, priv_key)
                 rsa_output.value = result
         except Exception as ex:
-            rsa_output.value = f"Error: {ex}"
+            rsa_output.value = f"❌ Error: {ex}"
         page.update()
 
-    btn_rsa = ft.ElevatedButton("Process", on_click=run_rsa, expand=True)
+    btn_rsa = ft.ElevatedButton("▶ Process", on_click=run_rsa, expand=True)
+    btn_copy_rsa = ft.ElevatedButton("📋 Copy", on_click=lambda e: copy_to_clipboard(rsa_output.value, "result"))
+    btn_copy_pub = ft.ElevatedButton("📋 Copy Pub", on_click=lambda e: copy_to_clipboard(rsa_pub_display.value, "public key"))
+    btn_copy_priv = ft.ElevatedButton("📋 Copy Priv", on_click=lambda e: copy_to_clipboard(rsa_priv_display.value, "private key"))
 
-    btn_copy_rsa = ft.ElevatedButton(
-        "📋 Copy",
-        on_click=lambda e: (page.set_clipboard(rsa_output.value), page.show_snack_bar(ft.SnackBar(content=ft.Text("Copied!")))),
-    )
-
-    tab_rsa.content = ft.Column([
-        ft.Text("Asymmetric (RSA)", size=24, weight=ft.FontWeight.BOLD),
+    tab_rsa_content = ft.Column([
+        ft.Text("🔒 Asymmetric (RSA)", size=22, weight=ft.FontWeight.BOLD),
+        ft.Text("Key pair required", size=12, color=ft.Colors.GREY_400),
         rsa_algo,
-        ft.Row([btn_rsa, btn_copy_rsa]),
-        ft.Text("Keys (stored in session):", size=14, weight=ft.FontWeight.W_500),
+        ft.Row([btn_rsa, btn_copy_rsa], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+        ft.Divider(),
+        ft.Text("Keys (stored in session):", size=13, weight=ft.FontWeight.W_500),
         rsa_pub_display,
+        ft.Row([btn_copy_pub], alignment=ft.MainAxisAlignment.END),
         rsa_priv_display,
+        ft.Row([btn_copy_priv], alignment=ft.MainAxisAlignment.END),
+        ft.Divider(),
         rsa_input,
         rsa_output,
     ], spacing=10, scroll=ft.ScrollMode.AUTO)
@@ -338,9 +325,9 @@ def main(page: ft.Page):
         selected_index=0,
         animation_duration=300,
         tabs=[
-            ft.Tab(text="Hash", content=tab_hash.content),
-            ft.Tab(text="Symmetric", content=tab_symmetric.content),
-            ft.Tab(text="RSA", content=tab_rsa.content),
+            ft.Tab(text="Hash", icon=ft.Icons.FINGERPRINT, content=tab_hash_content),
+            ft.Tab(text="Symmetric", icon=ft.Icons.KEY, content=tab_symmetric_content),
+            ft.Tab(text="RSA", icon=ft.Icons.LOCK, content=tab_rsa_content),
         ],
         expand=True,
     )
@@ -348,4 +335,5 @@ def main(page: ft.Page):
     page.add(tabs)
 
 
-ft.app(target=main)
+if __name__ == '__main__':
+    ft.app(target=main)
