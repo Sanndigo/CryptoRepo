@@ -1,6 +1,6 @@
 # Crypto Application
 
-A CLI tool for text encryption, decryption, and hashing.
+A cross-platform GUI app for text encryption, decryption, and hashing built with Flet.
 
 ## Features
 
@@ -28,13 +28,23 @@ pip3 install -r requirements.txt
 
 ## Usage
 
-### Interactive Mode
+### Desktop GUI
 
 ```bash
-python3 crypto_app.py
+python3 main_flet.py
 ```
 
-You'll be presented with a menu to choose operations.
+### Build APK
+
+```bash
+# Install Flet CLI
+pip3 install flet
+
+# Build for Android
+flet build apk
+
+# The APK will be in build/ directory
+```
 
 ### Programmatic Usage
 
@@ -66,8 +76,10 @@ python3 test_crypto.py
 
 ```
 Crypto/
-├── crypto_app.py      # Main application
+├── main_flet.py       # Flet GUI application
+├── crypto_app.py      # CLI application
 ├── test_crypto.py     # Test suite
+├── flet.toml          # Flet build configuration
 ├── requirements.txt   # Dependencies
 └── README.md         # This file
 ```

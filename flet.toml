@@ -1,0 +1,27 @@
+name = "CryptoTool"
+version = "1.0.0"
+description = "Crypto encryption/decryption tool"
+build_number = 1
+
+# App settings
+author = "CryptoApp"
+company = "CryptoApp"
+domain = "cryptoapp.local"
+
+# Android settings
+android = {
+    "min_sdk": 21,
+    "target_sdk": 34,
+    "compile_sdk": 34,
+    "permissions": [],
+}
+
+# iOS settings
+ios = {
+    "deployment_target": "13.0",
+}
+
+# Desktop
+web = {
+    "renderer": "canvaskit",
+}
